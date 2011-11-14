@@ -1,0 +1,68 @@
+#!/bin/bash
+# Get user/pass from command line; if not, prompt
+if [ $# -eq 2 ]; then
+    GH_USERNAME="$1"
+    GH_PASSWORD="$2"
+elif [ "$1" == "--help" ]; then
+    echo "Sets up Git with your existing Github account, creating and adding private keys as necessary."
+    echo "$0 github-username github-password"
+    exit
+fi
+if [ -z "$GH_USERNAME" ]; then
+  read -p "Github username:" GH_USERNAME
+fi
+if [ -z "$GH_PASSWORD" ]; then
+  read -s -p "Github password:" GH_PASSWORD
+fi
+curl -d "login=$GH_USERNAME&password=$GH_PASSWORD&commit=Log%20In" -A "Mozilla/5.0 (X11; Linux x86_64; rv:7.0.1) Gecko/20100101 Firefox/7.0.1" -c /tmp/$GH_USERNAME-github-cookie https://github.com/session
+curl -A "Mozilla/5.0 (X11; Linux x86_64; rv:7.0.1) Gecko/20100101 Firefox/7.0.1" -b /tmp/$GH_USERNAME-github-cookie -c /tmp/$GH_USERNAME-github-cookie https://github.com/account/admin > /tmp/$GH_USERNAME-github-info
+
+# Get email address from Github; if not, prompt
+# You can get this from the API too, but since we already got it from the page...
+sed -n -e 's/.*<span\ class\=\"address\">\([^<]*\)<\/span>.*/\1/p' /tmp/$GH_USERNAME-github-info > /tmp/$GH_USERNAME-email
+GH_EMAIL=`cat /tmp/$GH_USERNAME-email`
+rm /tmp/$GH_USERNAME-email
+
+# Get name from Github; if not, prompt
+# You can get this from the API too, but since we already got it from the page...
+#<dt><label>Name</label></dt>
+#  <dd>
+#    <input type="text" value="
+sed -n '/<dt><label>Name<\/label><\/dt>/,/<span class=\"success\"/p' /tmp/celeduc-github-info | sed -n -e 's/.*<input\ type\=\"text\" value\=\"\([^"]*\)\" \/>.*/\1/p' > /tmp/$GH_USERNAME-name
+GH_NAME=`cat /tmp/$GH_USERNAME-name`
+rm /tmp/$GH_USERNAME-name
+
+# Get token from Github
+# This you can't get through the API.
+#<p>Your API token is <code>xxx</code>
+sed -n -e 's/.*<p>Your API token is <code>\([^<]*\)<\/code>.*/\1/p' /tmp/$GH_USERNAME-github-info > /tmp/$GH_USERNAME-token
+GH_TOKEN=`cat /tmp/$GH_USERNAME-token`
+rm /tmp/$GH_USERNAME-token
+if [ ! -f ~/.ssh/id_rsa.pub ]; then
+    echo generating key
+    ssh-keygen -t rsa -C "$GH_EMAIL"
+    # No reason this should be necessary, but sometimes it's needed. Go figure.
+    ssh-add ~/.ssh/id_rsa
+    # Testing the connection also makes it a trusted host.
+    ssh -T git@github.com
+fi
+
+# Upload public key to github
+# Using the API
+curl -u "$GH_USERNAME:$GH_PASSWORD" -d "{\"title\":\"`whoami`@`hostname`.`date +%Y-%m-%d`\",\"key\":\"`cat ~/.ssh/id_rsa.pub`\"}" https://api.github.com/user/keys
+rm /tmp/$GH_USERNAME-github-cookie
+rm /tmp/$GH_USERNAME-github-info
+
+# Summarize
+echo -n "Name:"
+echo $GH_NAME
+git config --global user.name "$GH_NAME"
+echo -n "Email:"
+echo $GH_EMAIL
+git config --global user.email "$GH_EMAIL"
+echo -n "Username:"
+echo $GH_USERNAME
+git config --global github.user $GH_USERNAME
+echo -n "Token:"
+echo $GH_TOKEN
+git config --global github.token $GH_TOKEN
