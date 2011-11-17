@@ -28,7 +28,7 @@ rm /tmp/$GH_USERNAME-email
 #<dt><label>Name</label></dt>
 #  <dd>
 #    <input type="text" value="
-sed -n '/<dt><label>Name<\/label><\/dt>/,/<span class=\"success\"/p' /tmp/celeduc-github-info | sed -n -e 's/.*<input\ type\=\"text\" value\=\"\([^"]*\)\" \/>.*/\1/p' > /tmp/$GH_USERNAME-name
+sed -n '/<dt><label>Name<\/label><\/dt>/,/<span class=\"success\"/p' /tmp/$GH_USERNAME-github-info | sed -n -e 's/.*<input\ type\=\"text\" value\=\"\([^"]*\)\" \/>.*/\1/p' > /tmp/$GH_USERNAME-name
 GH_NAME=`cat /tmp/$GH_USERNAME-name`
 rm /tmp/$GH_USERNAME-name
 
