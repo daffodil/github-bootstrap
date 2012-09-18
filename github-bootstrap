@@ -9,10 +9,10 @@ elif [ "$1" == "--help" ]; then
     exit
 fi
 if [ -z "$GH_USERNAME" ]; then
-  read -p "Github username:" GH_USERNAME
+  read -p "Github username: " GH_USERNAME
 fi
 if [ -z "$GH_PASSWORD" ]; then
-  read -s -p "Github password:" GH_PASSWORD
+  read -s -p "Github password: " GH_PASSWORD
 fi
 # Pull the user record from Github
 GITHUB_USER_DATA="/tmp/$GH_USERNAME-github-api-v3-info"
@@ -22,13 +22,13 @@ curl -u "$GH_USERNAME:$GH_PASSWORD" -G  https://api.github.com/user > $GITHUB_US
 # Get email address from Github; if not, prompt
 GH_EMAIL=`cat $GITHUB_USER_DATA | grep '"name":' | tail -1 | awk -F":" '{ print $2 }' | sed -e 's/^[ \t]*//' | awk -F\" '{ print $2 }'`
 if [ -z "$GH_EMAIL" ]; then
-  read -p "Github email:" GH_EMAIL
+  read -p "Github email: " GH_EMAIL
 fi
 
 # Get name from Github; if not, prompt
 GH_NAME=`cat $GITHUB_USER_DATA | grep '"email":' | tail -1 | awk -F":" '{ print $2 }' | sed -e 's/^[ \t]*//' | awk -F\" '{ print $2 }'`
 if [ -z "$GH_NAME" ]; then
-  read -p "Your name:" GH_NAME
+  read -p "Your name: " GH_NAME
 fi
 
 # Generate keys if necessary
@@ -37,8 +37,6 @@ if [ ! -f ~/.ssh/id_rsa.pub ]; then
     ssh-keygen -t rsa -C "$GH_EMAIL"
     # No reason this should be necessary, but sometimes it's needed. Go figure.
     ssh-add ~/.ssh/id_rsa
-    # Testing the connection also makes it a trusted host.
-    ssh -T git@github.com
 fi
 
 # Upload public key to github
@@ -47,12 +45,15 @@ curl -u "$GH_USERNAME:$GH_PASSWORD" -d "{\"title\":\"`whoami`@`hostname`.`date +
 rm $GITHUB_USER_DATA
 
 # Summarize
-echo -n "Name:"
+echo -n "Name: "
 echo $GH_NAME
 git config --global user.name "$GH_NAME"
-echo -n "Email:"
+echo -n "Email: "
 echo $GH_EMAIL
 git config --global user.email "$GH_EMAIL"
-echo -n "Username:"
+echo -n "Username: "
 echo $GH_USERNAME
 git config --global github.user $GH_USERNAME
+
+# Testing the connection also makes it a trusted host.
+ssh -T git@github.com
