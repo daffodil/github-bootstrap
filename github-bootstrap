@@ -31,6 +31,16 @@ if [ -z "$GH_NAME" ]; then
   read -p "Your name:" GH_NAME
 fi
 
+# Generate keys if necessary
+if [ ! -f ~/.ssh/id_rsa.pub ]; then
+    echo generating key
+    ssh-keygen -t rsa -C "$GH_EMAIL"
+    # No reason this should be necessary, but sometimes it's needed. Go figure.
+    ssh-add ~/.ssh/id_rsa
+    # Testing the connection also makes it a trusted host.
+    ssh -T git@github.com
+fi
+
 # Upload public key to github
 # Using the API
 curl -u "$GH_USERNAME:$GH_PASSWORD" -d "{\"title\":\"`whoami`@`hostname`.`date +%Y-%m-%d`\",\"key\":\"`cat ~/.ssh/id_rsa.pub`\"}" https://api.github.com/user/keys
