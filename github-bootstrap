@@ -55,5 +55,5 @@ echo -n "Username: "
 echo $GH_USERNAME
 git config --global github.user $GH_USERNAME
 
-# Testing the connection also makes it a trusted host.
-ssh -T git@github.com
+# Test the connection
+ssh -o StrictHostKeyChecking=no -T git@github.com
