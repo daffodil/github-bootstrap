@@ -34,7 +34,7 @@ fi
 # Generate keys if necessary
 if [ ! -f ~/.ssh/id_rsa.pub ]; then
     echo generating key
-    ssh-keygen -t rsa -C "$GH_EMAIL"
+    ssh-keygen -t rsa -C "$GH_EMAIL" -f ~/.ssh/id_rsa
     # No reason this should be necessary, but sometimes it's needed. Go figure.
     ssh-add ~/.ssh/id_rsa
 fi
