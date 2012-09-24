@@ -1,4 +1,5 @@
 #!/bin/bash
+pushd ~
 # Get user/pass from command line; if not, prompt
 if [ $# -eq 2 ]; then
     GH_USERNAME="$1"
@@ -57,3 +58,5 @@ git config --global github.user $GH_USERNAME
 
 # Test the connection
 ssh -o StrictHostKeyChecking=no -T git@github.com
+
+popd
