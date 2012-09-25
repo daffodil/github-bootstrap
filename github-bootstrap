@@ -32,6 +32,10 @@ if [ -z "$GH_NAME" ]; then
   read -p "Your name: " GH_NAME
 fi
 
+# Figure out home diretory. Don't trust ~ because this might be sudone
+CURRENT_USER=`whoami`
+HOME=`awk -F: -v v="$CURRENT_USER" '{if ($1==v) print $6}' /etc/passwd`
+
 # Generate keys if necessary
 if [ ! -f ~/.ssh/id_rsa.pub ]; then
     echo generating key
