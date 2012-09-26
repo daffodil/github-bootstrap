@@ -27,7 +27,7 @@ if [ -z "$GH_EMAIL" ]; then
 fi
 
 # Get name from Github; if not, prompt
-GH_NAME=`cat $GITHUB_USER_DATA | grep '"name":' | head -1 | awk -F":" '{ print $2 }' | sed -e 's/^[ \t]*//' | awk -F\" '{ print $2 }'`
+GH_NAME=`cat $GITHUB_USER_DATA | grep '"name":' | tail -1 | awk -F":" '{ print $2 }' | sed -e 's/^[ \t]*//' | awk -F\" '{ print $2 }'`
 if [ -z "$GH_NAME" ]; then
   read -p "Your name: " GH_NAME
 fi
