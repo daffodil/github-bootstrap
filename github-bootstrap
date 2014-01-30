@@ -17,7 +17,7 @@ if [ -z "$GH_PASSWORD" ]; then
 fi
 # Pull the user record from Github
 GITHUB_USER_DATA="/tmp/$GH_USERNAME-github-api-v3-info"
-curl -u "$GH_USERNAME:$GH_PASSWORD" -G  https://api.github.com/user > $GITHUB_USER_DATA
+curl -G "https://api.github.com/users/$GH_USERNAME" > $GITHUB_USER_DATA
 # Parse it
 
 # Get email address from Github; if not, prompt
@@ -44,10 +44,28 @@ if [ ! -f ~/.ssh/id_rsa.pub ]; then
     ssh-add ~/.ssh/id_rsa
 fi
 
+# Check for two-factor auth
+GITHUB_USER_SERVER_RESPONSE="/tmp/$GH_USERNAME-github-api-v3-response"
+curl -u "$GH_USERNAME:$GH_PASSWORD" -D $GITHUB_USER_SERVER_RESPONSE  https://api.github.com/user/keys
+TFA_HEADER=""
+if grep "X-GitHub-OTP: required; app" $GITHUB_USER_SERVER_RESPONSE 
+then  
+  echo GitHub two-factor authentication required
+  read -p "Enter the code from your authenticator app: " TFA_CODE
+  TFA_HEADER="X-GitHub-OTP: $TFA_CODE"
+elif grep "X-GitHub-OTP: required; sms" $GITHUB_USER_SERVER_RESPONSE 
+then  
+  echo GitHub two-factor authentication required
+  read -p "Enter the code received via sms: " TFA_CODE
+  TFA_HEADER="X-GitHub-OTP: $TFA_CODE"
+fi
+
+# rm $GITHUB_USER_SERVER_RESPONSE
+
 # Upload public key to github
 # Using the API
-curl -u "$GH_USERNAME:$GH_PASSWORD" -d "{\"title\":\"`whoami`@`hostname`.`date +%Y-%m-%d`\",\"key\":\"`cat ~/.ssh/id_rsa.pub`\"}" https://api.github.com/user/keys
-rm $GITHUB_USER_DATA
+curl -u "$GH_USERNAME:$GH_PASSWORD" -H "$TFA_HEADER" -d "{\"title\":\"`whoami`@`hostname`.`date +%Y-%m-%d`\",\"key\":\"`cat ~/.ssh/id_rsa.pub`\"}" https://api.github.com/user/keys
+#rm $GITHUB_USER_DATA
 
 # Summarize
 echo -n "Name: "
