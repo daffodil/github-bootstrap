@@ -6,6 +6,7 @@ if [ $# -eq 2 ]; then
     GH_PASSWORD="$2"
 elif [ "$1" == "--help" ]; then
     echo "Sets up Git with your existing Github account, creating and adding private keys as necessary."
+    echo "Prompts for two-factor authentication code if enabled."
     echo "$0 github-username github-password"
     exit
 fi
@@ -56,16 +57,16 @@ then
 elif grep "X-GitHub-OTP: required; sms" $GITHUB_USER_SERVER_RESPONSE 
 then  
   echo GitHub two-factor authentication required
-  read -p "Enter the code received via sms: " TFA_CODE
-  TFA_HEADER="X-GitHub-OTP: $TFA_CODE"
+  echo Sms authentication is not currently supported
+  #read -p "Enter the code received via sms: " TFA_CODE
+  #TFA_HEADER="X-GitHub-OTP: $TFA_CODE"
 fi
-
-# rm $GITHUB_USER_SERVER_RESPONSE
+rm $GITHUB_USER_SERVER_RESPONSE
 
 # Upload public key to github
 # Using the API
 curl -u "$GH_USERNAME:$GH_PASSWORD" -H "$TFA_HEADER" -d "{\"title\":\"`whoami`@`hostname`.`date +%Y-%m-%d`\",\"key\":\"`cat ~/.ssh/id_rsa.pub`\"}" https://api.github.com/user/keys
-#rm $GITHUB_USER_DATA
+rm $GITHUB_USER_DATA
 
 # Summarize
 echo -n "Name: "
