@@ -47,7 +47,7 @@ fi
 
 # Check for two-factor auth
 GITHUB_USER_SERVER_RESPONSE="/tmp/$GH_USERNAME-github-api-v3-response"
-curl -u "$GH_USERNAME:$GH_PASSWORD" -D $GITHUB_USER_SERVER_RESPONSE  https://api.github.com/user/keys
+curl -u "$GH_USERNAME:$GH_PASSWORD" -D $GITHUB_USER_SERVER_RESPONSE -d "{\"title\":\"`whoami`@`hostname`.`date +%Y-%m-%d`\",\"key\":\"`cat ~/.ssh/id_rsa.pub`\"}" https://api.github.com/user/keys
 TFA_HEADER=""
 if grep "X-GitHub-OTP: required; app" $GITHUB_USER_SERVER_RESPONSE 
 then  
@@ -57,15 +57,17 @@ then
 elif grep "X-GitHub-OTP: required; sms" $GITHUB_USER_SERVER_RESPONSE 
 then  
   echo GitHub two-factor authentication required
-  echo Sms authentication is not currently supported
-  #read -p "Enter the code received via sms: " TFA_CODE
-  #TFA_HEADER="X-GitHub-OTP: $TFA_CODE"
+  read -p "Enter the code received via sms: " TFA_CODE
+  TFA_HEADER="X-GitHub-OTP: $TFA_CODE"
 fi
 rm $GITHUB_USER_SERVER_RESPONSE
 
-# Upload public key to github
-# Using the API
-curl -u "$GH_USERNAME:$GH_PASSWORD" -H "$TFA_HEADER" -d "{\"title\":\"`whoami`@`hostname`.`date +%Y-%m-%d`\",\"key\":\"`cat ~/.ssh/id_rsa.pub`\"}" https://api.github.com/user/keys
+if [ ${#TFA_HEADER} != 0 ]
+then
+  # Upload public key to github
+  # Using the API
+  curl -u "$GH_USERNAME:$GH_PASSWORD" -H "$TFA_HEADER" -d "{\"title\":\"`whoami`@`hostname`.`date +%Y-%m-%d`\",\"key\":\"`cat ~/.ssh/id_rsa.pub`\"}" https://api.github.com/user/keys
+fi
 rm $GITHUB_USER_DATA
 
 # Summarize
